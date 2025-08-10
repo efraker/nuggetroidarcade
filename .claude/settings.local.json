@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(rm:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm install)",
+      "Bash(timeout 10s npm run dev)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)",
+      "Bash(ls:*)",
+      "Bash(timeout 5s npm run dev)",
+      "Bash(mkdir:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git branch:*)",
+      "Bash(git pull:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": []
+  }
+}
