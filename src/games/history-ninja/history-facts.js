@@ -1,4 +1,95 @@
 export const historyFacts = {
+  // SEMANTIC CUE: New themed categories with custom emoji rain effects
+  'ancient-rome': [
+    {
+      fact: "Who was the first Roman Emperor?",
+      answers: [
+        { text: "Augustus", isCorrect: true },
+        { text: "Julius Caesar", isCorrect: false },
+        { text: "Nero", isCorrect: false },
+        { text: "A gladiator who got really lucky", isCorrect: false, isZany: true }
+      ]
+    },
+    {
+      fact: "The Roman Empire fell in what year?",
+      answers: [
+        { text: "476 AD", isCorrect: true },
+        { text: "500 AD", isCorrect: false },
+        { text: "400 AD", isCorrect: false },
+        { text: "When they ran out of pizza", isCorrect: false, isZany: true }
+      ]
+    },
+    {
+      fact: "What was the center of Roman public life?",
+      answers: [
+        { text: "The Forum", isCorrect: true },
+        { text: "The Colosseum", isCorrect: false },
+        { text: "The Pantheon", isCorrect: false },
+        { text: "A really big hot tub", isCorrect: false, isZany: true }
+      ]
+    }
+  ],
+  
+  'space-race': [
+    {
+      fact: "Who was the first human in space?",
+      answers: [
+        { text: "Yuri Gagarin", isCorrect: true },
+        { text: "Neil Armstrong", isCorrect: false },
+        { text: "John Glenn", isCorrect: false },
+        { text: "A very ambitious cat", isCorrect: false, isZany: true }
+      ]
+    },
+    {
+      fact: "The first moon landing was in what year?",
+      answers: [
+        { text: "1969", isCorrect: true },
+        { text: "1968", isCorrect: false },
+        { text: "1970", isCorrect: false },
+        { text: "During a really good episode of Star Trek", isCorrect: false, isZany: true }
+      ]
+    },
+    {
+      fact: "What was the name of the first artificial satellite?",
+      answers: [
+        { text: "Sputnik", isCorrect: true },
+        { text: "Explorer 1", isCorrect: false },
+        { text: "Vanguard", isCorrect: false },
+        { text: "The Beeping Ball of Doom", isCorrect: false, isZany: true }
+      ]
+    }
+  ],
+  
+  pirates: [
+    {
+      fact: "What was the most famous pirate stronghold in the Caribbean?",
+      answers: [
+        { text: "Port Royal", isCorrect: true },
+        { text: "Tortuga", isCorrect: false },
+        { text: "Nassau", isCorrect: false },
+        { text: "A floating taco stand", isCorrect: false, isZany: true }
+      ]
+    },
+    {
+      fact: "Who was known as 'Blackbeard'?",
+      answers: [
+        { text: "Edward Teach", isCorrect: true },
+        { text: "Henry Morgan", isCorrect: false },
+        { text: "Bartholomew Roberts", isCorrect: false },
+        { text: "A really hairy accountant", isCorrect: false, isZany: true }
+      ]
+    },
+    {
+      fact: "The 'Golden Age of Piracy' was roughly what period?",
+      answers: [
+        { text: "1650-1730", isCorrect: true },
+        { text: "1500-1600", isCorrect: false },
+        { text: "1750-1850", isCorrect: false },
+        { text: "Every Tuesday at 3 PM", isCorrect: false, isZany: true }
+      ]
+    }
+  ],
+  
   american: [
     {
       fact: "Who was the first President of the United States?",

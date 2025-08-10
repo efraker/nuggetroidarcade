@@ -1,7 +1,9 @@
 {
   "name": "nuggetroidarcade",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "The most spectacular web-based game arcade with ninja-powered visual effects, featuring History Ninja and Word Wizard with shared progression systems.",
+  "keywords": ["react", "arcade", "games", "visual-effects", "progressive-web-app", "education", "entertainment"],
   "type": "module",
   "scripts": {
     "dev": "vite",

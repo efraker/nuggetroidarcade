@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { wordLists } from './word-list'; // Import words from our new file
+import { wordLists } from './word-list';
+// SEMANTIC CUE: Integrating shared progression and effects systems
+import { useGameEffects } from '../../shared/hooks/useGameEffects';
+import { useStreakSystem } from '../../shared/hooks/useStreakSystem';
+import { useAchievementSystem } from '../../shared/hooks/useAchievementSystem';
+import { EffectContainer } from '../../shared/components/effects/EffectContainer';
+import { AnimatedScore } from '../../shared/components/effects/AnimatedScore';
+import { StreakDisplay } from '../../shared/components/ui/StreakDisplay';
+import { EFFECT_COMBOS } from '../../shared/config/animations';
 
 // --- Text-to-Speech Function ---
 // A helper function to make the speech synthesis more reusable and reliable.
@@ -32,12 +40,28 @@ const speak = (text, rate = 0.8, pitch = 1.1) => {
 
 
 export default function WordWizard() {
+  // --- Shared Systems Integration ---
+  // SEMANTIC CUE: Audio-visual effects with spelling-themed sounds
+  const { effects, triggerEffectCombo } = useGameEffects(true, 0.7);
+  
+  // SEMANTIC CUE: Streak system with lightning effects for spelling streaks
+  const { currentStreak, maxStreak, handleCorrectAnswer: handleStreak, handleIncorrectAnswer: breakStreak, getStreakDisplay, resetStreak } = useStreakSystem((streakLevel, milestone) => {
+    // Trigger lightning effects for spelling streaks
+    triggerEffectCombo(`streak${streakLevel}`);
+    speak(`${milestone.name}! ${streakLevel} word streak!`, 1.0, 1.2);
+  });
+  
+  // SEMANTIC CUE: Achievement system for spelling accomplishments
+  const { checkMultipleAchievements } = useAchievementSystem((achievement) => {
+    triggerEffectCombo('achievementUnlock');
+    speak(`Achievement unlocked: ${achievement.name}!`, 1.0, 1.3);
+  });
+
   // --- State Management ---
   const [gameState, setGameState] = useState('start');
   const [currentWord, setCurrentWord] = useState('');
   const [userInput, setUserInput] = useState('');
   const [score, setScore] = useState(0);
-  const [streak, setStreak] = useState(0);
   const [difficulty, setDifficulty] = useState('easy');
   const [feedback, setFeedback] = useState('');
   const inputRef = useRef(null);
@@ -89,6 +113,11 @@ export default function WordWizard() {
     setGameState('playing');
     setFeedback('');
     
+    // SEMANTIC CUE: Question transition effect
+    if (gameState !== 'start') {
+      triggerEffectCombo('questionTransition');
+    }
+    
     // Automatically speak the word when the round starts
     setTimeout(() => {
       speak("Please spell");
@@ -99,6 +128,12 @@ export default function WordWizard() {
       inputRef.current.focus();
     }
   };
+  
+  // SEMANTIC CUE: Reset streaks when starting new game
+  const startGame = () => {
+    resetStreak();
+    startNewRound();
+  };
 
   const handleWordSound = () => {
     speak(currentWord, 0.7);
@@ -106,21 +141,45 @@ export default function WordWizard() {
 
   const checkAnswer = () => {
     if (userInput.toLowerCase() === currentWord.toLowerCase()) {
+      // SEMANTIC CUE: Integrated scoring with streak system and achievements
       const difficultyMultiplier = { easy: 1, medium: 2, hard: 3, expert: 4 }[difficulty];
-      const earnedCoins = Math.ceil(currentWord.length * difficultyMultiplier);
-      const newStreak = streak + 1;
-      const streakBonus = Math.floor(newStreak / 5) * 5;
-
-      setCoins(coins + earnedCoins + streakBonus);
+      const baseCoins = Math.ceil(currentWord.length * difficultyMultiplier);
+      
+      // Handle streak and get bonus scoring
+      const streakResult = handleStreak(baseCoins);
+      const totalCoins = streakResult.totalScore;
+      
+      setCoins(coins + totalCoins);
       setScore(score + 1);
-      setStreak(newStreak);
       setGameState('correct');
-      setFeedback(`+${earnedCoins} coins${streakBonus > 0 ? ` & +${streakBonus} streak bonus!` : '!'}`);
+      
+      // Check for achievements
+      const gameStats = {
+        totalCorrect: score + 1,
+        maxStreak: Math.max(maxStreak, streakResult.streak),
+        currentStreak: streakResult.streak,
+        wordsSpelled: score + 1,
+        difficulty: difficulty
+      };
+      checkMultipleAchievements(gameStats);
+      
+      // Trigger appropriate effects
+      if (streakResult.milestone) {
+        // Streak milestone effects already triggered by useStreakSystem callback
+        setFeedback(`${streakResult.milestone.name}! +${totalCoins} coins (${streakResult.streak}x streak!)`);
+      } else {
+        // Regular correct answer
+        triggerEffectCombo('correctAnswer');
+        setFeedback(`+${totalCoins} coins${streakResult.bonusScore > 0 ? ` (streak bonus!)` : '!'}`);
+      }
+      
     } else {
+      // SEMANTIC CUE: Break streak and show incorrect effects
+      breakStreak();
       setGameState('incorrect');
-      setStreak(0);
       setFeedback(`The correct spelling is: "${currentWord}"`);
       speak(`The correct spelling is ${currentWord}`, 0.9);
+      triggerEffectCombo('incorrectAnswer');
     }
   };
 
@@ -164,11 +223,20 @@ export default function WordWizard() {
                 <p className="text-gray-300">Spell words, earn coins, unlock skins!</p>
             </div>
             
-            {/* Game stats */}
-            <div className="flex justify-around mb-6 text-center">
+            {/* Game stats with enhanced visual effects */}
+            <div className="flex justify-around mb-6 text-center items-center">
                 <div><span className="text-xl">💰</span> {coins} Coins</div>
-                <div><span className="text-xl">🏆</span> {score} Score</div>
-                <div><span className="text-xl">🔥</span> {streak} Streak</div>
+                <div className="relative">
+                    <AnimatedScore 
+                        score={score} 
+                        isAnimating={effects.scoreGlow}
+                        animationType="glow"
+                    />
+                </div>
+                <StreakDisplay 
+                    streakInfo={getStreakDisplay()} 
+                    isAnimating={effects.lightning || effects.sparks}
+                />
             </div>
             
             {/* Difficulty selection */}
@@ -187,12 +255,16 @@ export default function WordWizard() {
                 </div>
             </div>
             
-            {/* Main Game Area */}
-            <div className="bg-gray-800 p-6 rounded-lg shadow-inner mb-6 flex flex-col items-center justify-center text-center min-h-[250px]">
+            {/* Main Game Area with Visual Effects */}
+            <EffectContainer 
+                effects={effects} 
+                emojiTheme="celebration" 
+                className="bg-gray-800 p-6 rounded-lg shadow-inner mb-6 flex flex-col items-center justify-center text-center min-h-[250px]"
+            >
                 {gameState === 'start' && (
                     <>
                         <h2 className="text-2xl font-bold text-white mb-4">Ready to be a Word Wizard?</h2>
-                        <button onClick={startNewRound}
+                        <button onClick={startGame}
                             className="bg-yellow-500 text-gray-900 px-6 py-3 rounded-lg font-bold text-lg hover:bg-yellow-400 transition"
                         >Start Game</button>
                     </>
@@ -214,14 +286,14 @@ export default function WordWizard() {
 
                 {(gameState === 'correct' || gameState === 'incorrect') && (
                     <div className={`p-4 rounded-lg w-full text-center ${gameState === 'correct' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-                        <div className="text-xl font-bold mb-2">{gameState === 'correct' ? '✓ Correct!' : '✗ Incorrect!'}</div>
+                        <div className="text-xl font-bold mb-2">{gameState === 'correct' ? '🎯 Correct!' : '💫 Try Again!'}</div>
                         <div>{feedback}</div>
                         <button onClick={startNewRound} className={`mt-4 px-4 py-2 rounded-lg font-bold text-white transition ${gameState === 'correct' ? 'bg-green-600 hover:bg-green-500' : 'bg-red-600 hover:bg-red-500'}`}>
                             Next Word
                         </button>
                     </div>
                 )}
-            </div>
+            </EffectContainer>
 
             {/* Skin Shop */}
             <div className="bg-gray-800 p-6 rounded-lg shadow-inner">

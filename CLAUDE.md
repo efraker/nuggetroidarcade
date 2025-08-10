@@ -79,9 +79,84 @@ Uses standard Tailwind 4+ setup with content scanning configured for the project
 3. Export a default React component
 4. The game will automatically appear in the menu and be routable
 
+## Shared Visual Effects System
+
+The arcade includes a comprehensive visual effects system available to all games:
+
+### Architecture
+- **Location**: `src/shared/` directory
+- **Components**: Reusable effect components (smoke, shuriken, confetti, emoji rain, lightning, etc.)
+- **Hooks**: `useGameEffects` hook for trigger-based animation management
+- **Configuration**: Centralized animation timing and combinations
+
+### Usage in Games
+```javascript
+// Import shared effects system
+import { useGameEffects } from '../../shared/hooks/useGameEffects';
+import { EffectContainer } from '../../shared/components/effects/EffectContainer';
+import { EFFECT_COMBOS } from '../../shared/config/animations';
+
+// Use in component
+const { effects, triggerEffect, triggerMultipleEffects } = useGameEffects();
+
+// Trigger effects
+triggerEffect('confetti', 2000);
+triggerMultipleEffects(EFFECT_COMBOS.correctAnswer);
+
+// Render with effects
+<EffectContainer effects={effects} emojiTheme="american">
+  <YourGameContent />
+</EffectContainer>
+```
+
+### Available Effects
+- **Basic**: smoke, shuriken, confetti, lightning, sparks
+- **Animated UI**: scoreGlow, transition effects, streak displays
+- **Themed**: emojiRain with 15+ country/theme presets including Ancient Rome, Space Race, Pirates
+- **Combinations**: Pre-built effect sequences for game events, streaks, achievements
+- **Audio**: 9 ninja-themed sounds synchronized with visual effects
+
+### Progression Systems
+The arcade includes shared progression systems:
+- **Streak System**: Tracks consecutive correct answers with 6 milestone levels (3, 5, 7, 10, 15, 20+)
+- **Achievement System**: Unlockable achievements with special emoji rain themes  
+- **Score Multipliers**: Streaks provide 1.5x to 5x score bonuses
+- **Audio-Visual Sync**: All effects perfectly synchronized with ninja-themed sounds
+
+### Benefits
+- **Consistent Experience**: All games share the same polished visual language and progression
+- **Easy Integration**: Drop-in components with automatic cleanup
+- **Performance Optimized**: Mobile-friendly with 60fps targeting
+- **Extensible**: New effects, achievements, and categories benefit all games automatically
+- **Engaging Progression**: Streaks, achievements, and combos keep players motivated
+
 ## Current State
 
-The project structure is set up but the individual game files (`word-wizard.jsx`, `history-ninja.jsx`) are currently empty and need to be implemented. The auto-discovery system and routing are functional.
+The project includes **two fully implemented games** with comprehensive progression systems:
+
+### **History Ninja** 🥷
+- Complete history quiz game with 5 categories (American, Ancient Rome, Space Race, Pirates, + more)
+- Full audio-visual effects with ninja-themed sounds
+- Streak system with lightning effects for 3, 5, 7, 10+ correct answers
+- Achievement system with unlockable emoji rain themes
+- Country-specific celebrations (Roman temples, space rockets, pirate ships)
+
+### **Word Wizard** 🧙‍♂️  
+- Advanced spelling game with text-to-speech integration
+- 4 difficulty levels (Easy → Expert) with progressive word complexity
+- Coin economy with unlockable cosmetic skins
+- Same streak/achievement system adapted for spelling
+- Lightning effects for spelling streaks with score multipliers
+
+### **Shared Systems**
+All games utilize the **shared effects architecture** including:
+- 🎵 9 ninja-themed sounds synchronized with actions
+- ⚡ Universal streak system with 6 milestone levels  
+- 🏆 Cross-game achievement system with emoji rain rewards
+- 🎊 15+ themed emoji celebrations (countries, achievements, special effects)
+- 🎯 Performance-optimized for 60fps on mobile devices
+
+The **auto-discovery system** and **routing** are fully functional - new games automatically appear in the menu when added to `src/games/`.
 
 ## Known Issues
 

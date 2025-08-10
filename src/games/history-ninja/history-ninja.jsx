@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { historyFacts } from './history-facts'; // Import the facts
+import { historyFacts } from './history-facts';
+// SEMANTIC CUE: Using shared systems available to all games
+import { useGameEffects } from '../../shared/hooks/useGameEffects';
+import { useStreakSystem } from '../../shared/hooks/useStreakSystem';
+import { useAchievementSystem } from '../../shared/hooks/useAchievementSystem';
+import { EffectContainer } from '../../shared/components/effects/EffectContainer';
+import { AnimatedScore } from '../../shared/components/effects/AnimatedScore';
+import { StreakDisplay } from '../../shared/components/ui/StreakDisplay';
+import { ANIMATIONS, EFFECT_COMBOS, getCountryCompletionEffects, COUNTRY_EMOJI_THEMES } from '../../shared/config/animations';
 
 // Helper function to shuffle an array
 const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
@@ -13,6 +21,22 @@ export default function HistoryNinja() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [score, setScore] = useState(0);
   const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'finished'
+  
+  // SEMANTIC CUE: Integrated progression systems
+  const { effects, triggerEffect, triggerEffectCombo } = useGameEffects(true, 0.6);
+  
+  // Streak system for consecutive correct answers
+  const { currentStreak, maxStreak, handleCorrectAnswer: handleStreak, handleIncorrectAnswer: breakStreak, getStreakDisplay, resetStreak } = useStreakSystem((streakLevel, milestone) => {
+    // Trigger special effects for streak milestones
+    triggerEffectCombo(`streak${streakLevel}`);
+  });
+  
+  // Achievement system for unlocking special celebrations
+  const { checkMultipleAchievements, getUnlockedThemes } = useAchievementSystem((achievement) => {
+    // Trigger celebration when achievement is unlocked
+    triggerEffectCombo('achievementUnlock');
+    console.log(`Achievement unlocked: ${achievement.name} ${achievement.icon}`);
+  });
   
   // Load and save high score from localStorage
   const [highScore, setHighScore] = useState(() => {
@@ -29,6 +53,9 @@ export default function HistoryNinja() {
     setScore(0);
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
+    // SEMANTIC CUE: Reset streak when starting new game
+    resetStreak();
+    
     const gameQuestions = shuffleArray(historyFacts[selectedCountry]);
     setQuestions(gameQuestions);
     setGameState('playing');
@@ -42,23 +69,71 @@ export default function HistoryNinja() {
 
   const handleAnswerSelect = (answer) => {
     setSelectedAnswer(answer);
+    
+    // SEMANTIC CUE: Integrated answer handling with streaks, combos, and achievements
     if (answer.isCorrect) {
-      setScore(score + 100);
+      // Handle streak and scoring
+      const streakResult = handleStreak(100);
+      setScore(score + streakResult.totalScore);
+      
+      // Trigger appropriate effects based on streak level
+      if (streakResult.milestone) {
+        // Streak milestone reached - effects already triggered by useStreakSystem callback
+        console.log(`🔥 ${streakResult.milestone.name}! ${streakResult.streak}x streak!`);
+      } else {
+        // Regular correct answer
+        triggerEffectCombo('correctAnswer');
+      }
+      
+      // Check for achievements
+      const gameStats = {
+        totalCorrect: score / 100 + 1,
+        maxStreak,
+        currentStreak: streakResult.streak,
+        categoriesCompleted: 1
+      };
+      checkMultipleAchievements(gameStats);
+      
+    } else {
+      // Break streak on wrong answer
+      breakStreak();
+      
+      if (answer.isZany) {
+        triggerEffectCombo('zanyAnswer');
+      } else {
+        triggerEffectCombo('incorrectAnswer');
+      }
     }
   };
 
   const nextQuestion = () => {
-    setSelectedAnswer(null);
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      // Game finished, check for new high score
-      if (score > highScore) {
-        setHighScore(score);
-        localStorage.setItem(`historyNinjaHighScore_${selectedCountry}`, score);
+    // SEMANTIC CUE: Trigger transition effect
+    triggerEffect('transition', ANIMATIONS.effects.transition.duration);
+    
+    setTimeout(() => {
+      setSelectedAnswer(null);
+      if (currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      } else {
+        // Game finished, check for new high score
+        const isNewHighScore = score > highScore;
+        if (isNewHighScore) {
+          setHighScore(score);
+          localStorage.setItem(`historyNinjaHighScore_${selectedCountry}`, score);
+          // SEMANTIC CUE: Epic celebration for new high score
+          triggerEffectCombo('newHighScore'); // Howl + hiya + explosion!
+        } else {
+          // SEMANTIC CUE: Country-specific completion with emoji rain and victory sounds
+          const countryComboName = `${selectedCountry}Complete`;
+          if (EFFECT_COMBOS[countryComboName]) {
+            triggerEffectCombo(countryComboName); // Country emoji rain + completion sounds!
+          } else {
+            triggerEffectCombo('gameComplete'); // Ninja teleport + explosion!
+          }
+        }
+        setGameState('finished');
       }
-      setGameState('finished');
-    }
+    }, ANIMATIONS.effects.transition.duration);
   };
 
   const getButtonClass = (answer) => {
@@ -106,13 +181,31 @@ export default function HistoryNinja() {
 
         {gameState === 'playing' && currentQuestion && (
           <div>
-            <div className="flex justify-between text-indigo-400 mb-4 text-sm">
-              <span>Score: {score}</span>
+            <div className="flex justify-between items-center text-indigo-400 mb-4 text-sm">
+              {/* SEMANTIC CUE: Score and streak display */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <AnimatedScore 
+                    score={score} 
+                    isAnimating={effects.scoreGlow}
+                    animationType="glow"
+                  />
+                </div>
+                <StreakDisplay 
+                  streakInfo={getStreakDisplay()} 
+                  isAnimating={effects.lightning || effects.sparks}
+                />
+              </div>
               <span>Question: {currentQuestionIndex + 1} / {questions.length}</span>
             </div>
-            <div className="bg-gray-800 p-6 rounded-lg shadow-inner mb-6 text-center min-h-[100px]">
+            {/* SEMANTIC CUE: Question container with visual effects support */}
+            <EffectContainer 
+              effects={effects} 
+              emojiTheme={COUNTRY_EMOJI_THEMES[selectedCountry] || COUNTRY_EMOJI_THEMES.default}
+              className="bg-gray-800 p-6 rounded-lg shadow-inner mb-6 text-center min-h-[100px]"
+            >
               <p className="text-lg text-white">{currentQuestion.fact}</p>
-            </div>
+            </EffectContainer>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {shuffledAnswers.map((answer, index) => (
                 <button
