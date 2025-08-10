@@ -4,11 +4,18 @@ import NeonSign from './components/NeonSign';
 import './index.css';
 
 // --- SOUND SETUP ---
+// 1. Import each sound file directly. Vite will handle the paths.
+import jumpSound from './assets/sounds/jump.mp3';
+import laserSound from './assets/sounds/laser.mp3';
+import howlSound from './assets/sounds/howl.mp3';
+import explosionSound from './assets/sounds/explosion.mp3';
+
+// 2. Create the array using the imported variables.
 const soundFiles = [
-  '/sounds/jump.mp3',
-  '/sounds/laser.mp3',
-  '/sounds/howl.mp3',
-  '/sounds/explosion.mp3'
+  jumpSound,
+  laserSound,
+  howlSound,
+  explosionSound
 ];
 
 const hoverSound = new Audio();
