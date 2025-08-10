@@ -22,12 +22,12 @@ export const useStreakSystem = (onStreakMilestone) => {
 
   // Streak milestone definitions
   const STREAK_MILESTONES = {
-    3: { name: 'Hot Streak', effect: 'lightning', multiplier: 1.5 },
-    5: { name: 'On Fire!', effect: 'perfectStreak', multiplier: 2.0 },
-    7: { name: 'Unstoppable', effect: 'lightning', multiplier: 2.5 },
-    10: { name: 'Legendary', effect: 'perfectStreak', multiplier: 3.0 },
-    15: { name: 'Godlike', effect: 'perfectStreak', multiplier: 4.0 },
-    20: { name: 'Ninja Master', effect: 'perfectStreak', multiplier: 5.0 }
+    3: { name: 'Hot Streak', effect: 'streak3', multiplier: 1.5 },
+    5: { name: 'On Fire!', effect: 'streak5', multiplier: 2.0 },
+    7: { name: 'Unstoppable', effect: 'streak5', multiplier: 2.5 },
+    10: { name: 'Legendary', effect: 'streak10', multiplier: 3.0 },
+    15: { name: 'Godlike', effect: 'streak10', multiplier: 4.0 },
+    20: { name: 'Ninja Master', effect: 'streak10', multiplier: 5.0 }
   };
 
   /**

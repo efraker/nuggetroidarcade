@@ -27,8 +27,8 @@ export default function HistoryNinja() {
   
   // Streak system for consecutive correct answers
   const { currentStreak, maxStreak, handleCorrectAnswer: handleStreak, handleIncorrectAnswer: breakStreak, getStreakDisplay, resetStreak } = useStreakSystem((streakLevel, milestone) => {
-    // Trigger special effects for streak milestones
-    triggerEffectCombo(`streak${streakLevel}`);
+    // Trigger special effects for streak milestones - milestone.effect contains the correct animation combo name
+    triggerEffectCombo(milestone.effect);
   });
   
   // Achievement system for unlocking special celebrations

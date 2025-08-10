@@ -46,8 +46,8 @@ export default function WordWizard() {
   
   // SEMANTIC CUE: Streak system with lightning effects for spelling streaks
   const { currentStreak, maxStreak, handleCorrectAnswer: handleStreak, handleIncorrectAnswer: breakStreak, getStreakDisplay, resetStreak } = useStreakSystem((streakLevel, milestone) => {
-    // Trigger lightning effects for spelling streaks
-    triggerEffectCombo(`streak${streakLevel}`);
+    // Trigger lightning effects for spelling streaks - milestone.effect contains the correct combo name
+    triggerEffectCombo(milestone.effect);
     speak(`${milestone.name}! ${streakLevel} word streak!`, 1.0, 1.2);
   });
   
