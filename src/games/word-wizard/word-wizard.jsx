@@ -13,13 +13,19 @@ const speak = (text, rate = 0.8, pitch = 1.1) => {
   utterance.volume = 1.0;
 
   // Try to find a high-quality voice
-  const voices = window.speechSynthesis.getVoices();
-  const preferredVoice = voices.find(voice => 
-    voice.name.includes('Google') || voice.name.includes('Premium') || voice.name.includes('Enhanced')
-  );
-  if (preferredVoice) {
-    utterance.voice = preferredVoice;
+  // 1. Get all available voices from the browser.
+  const allVoices = window.speechSynthesis.getVoices();
+  
+  // 2. Filter the list to include only US English voices.
+  const usEnglishVoices = allVoices.filter(voice => voice.lang === 'en-US');
+
+  // 3. If any US English voices were found...
+  if (usEnglishVoices.length > 0) {
+    // ...pick one from the filtered list at random!
+    const randomVoice = usEnglishVoices[Math.floor(Math.random() * usEnglishVoices.length)];
+    utterance.voice = randomVoice;
   }
+  // If no 'en-US' voices are found, the browser will use its default voice automatically.
 
   window.speechSynthesis.speak(utterance);
 };
@@ -44,12 +50,12 @@ export default function WordWizard() {
 
   const [ownedSkins, setOwnedSkins] = useState(() => {
     const savedSkins = localStorage.getItem('wordWizardSkins');
-    return savedSkins ? JSON.parse(savedSkins) : ['default'];
+    return savedSkins ? JSON.parse(savedSkins) : ['noob'];
   });
   
   const [activeSkin, setActiveSkin] = useState(() => {
     const savedActiveSkin = localStorage.getItem('wordWizardActiveSkin');
-    return savedActiveSkin || 'default';
+    return savedActiveSkin || 'noob';
   });
 
   // --- useEffect hooks to save progress ---
@@ -67,7 +73,7 @@ export default function WordWizard() {
 
   // Available skins (could also be moved to a separate file)
   const availableSkins = [
-    { id: 'default', name: 'Default', cost: 0, color: 'text-gray-800' },
+    { id: 'noob', name: 'Noob', cost: 0, color: 'text-gray-800' },
     { id: 'rainbow', name: 'Rainbow', cost: 50, gradientClass: 'text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-red-500' },
     { id: 'neon', name: 'Neon', cost: 80, color: 'text-green-500', textShadow: '0 0 5px #00ff00, 0 0 10px #00ff00' },
     { id: 'gold', name: 'Gold', cost: 100, color: 'text-yellow-500', textShadow: '0 0 3px #ffd700' },
@@ -228,7 +234,7 @@ export default function WordWizard() {
                         return (
                             <div key={skin.id} className={`border rounded-lg p-3 text-center relative transition ${isActive ? 'border-2 border-yellow-400' : 'border-gray-600'}`}>
                                 <div className="text-xl mb-2 h-8 flex items-center justify-center">
-                                    <span className={skinStyle.className || 'text-white'} style={skinStyle.style}>SAMPLE</span>
+                                    <span className={skinStyle.className || 'text-white'} style={skinStyle.style}>PREVIEW</span>
                                 </div>
                                 <div className="font-bold mb-1 text-sm">{skin.name}</div>
                                 {!isOwned ? (
