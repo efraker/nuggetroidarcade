@@ -19,7 +19,9 @@
       "Bash(git pull:*)",
       "Bash(git commit:*)",
       "Bash(cp:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm run lint:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { historyFacts } from './history-facts';
+// Kid-friendly validation helpers
+import { validateGameData, safeDataAccess } from '../../shared/helpers/validation';
 // SEMANTIC CUE: Using shared systems available to all games
 import { useGameEffects } from '../../shared/hooks/useGameEffects';
 import { useStreakSystem } from '../../shared/hooks/useStreakSystem';
@@ -14,6 +16,12 @@ import { ANIMATIONS, EFFECT_COMBOS, getCountryCompletionEffects, COUNTRY_EMOJI_T
 const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
 export default function HistoryNinja() {
+  // Check if game data is set up correctly
+  const [dataValidation] = useState(() => {
+    return validateGameData.validateQuizData(historyFacts, 'History Ninja');
+  });
+  const [hasDataError, setHasDataError] = useState(false);
+  
   const [selectedCountry, setSelectedCountry] = useState('american');
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -49,21 +57,42 @@ export default function HistoryNinja() {
     setHighScore(savedHighScore ? parseInt(savedHighScore, 10) : 0);
   }, [selectedCountry]);
 
+  // Show validation results when component loads
+  useEffect(() => {
+    if (!validateGameData.showValidationResults(dataValidation, 'History Ninja')) {
+      setHasDataError(true);
+    }
+  }, [dataValidation]);
+
   const startGame = () => {
+    // Safety check: make sure we have questions for this category
+    const categoryQuestions = safeDataAccess.getQuizQuestions(historyFacts, selectedCountry, 'History Ninja');
+    
+    if (categoryQuestions.length === 0) {
+      alert(`❌ Sorry! No questions found for "${selectedCountry}". Please check your data file!`);
+      return;
+    }
+    
     setScore(0);
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
     // SEMANTIC CUE: Reset streak when starting new game
     resetStreak();
     
-    const gameQuestions = shuffleArray(historyFacts[selectedCountry]);
+    const gameQuestions = shuffleArray(categoryQuestions);
     setQuestions(gameQuestions);
     setGameState('playing');
   };
 
   useEffect(() => {
     if (gameState === 'playing' && questions.length > 0) {
-      setShuffledAnswers(shuffleArray(questions[currentQuestionIndex].answers));
+      const currentQ = questions[currentQuestionIndex];
+      if (currentQ && currentQ.answers && Array.isArray(currentQ.answers)) {
+        setShuffledAnswers(shuffleArray(currentQ.answers));
+      } else {
+        console.error(`❌ Question ${currentQuestionIndex + 1} has invalid answers!`);
+        setShuffledAnswers([]);
+      }
     }
   }, [currentQuestionIndex, questions, gameState]);
 
@@ -144,6 +173,35 @@ export default function HistoryNinja() {
   };
 
   const currentQuestion = questions[currentQuestionIndex];
+  
+  // Show error screen if data is invalid
+  if (hasDataError) {
+    return (
+      <div className="max-w-4xl mx-auto p-4" style={{ fontFamily: "'Press Start 2P', cursive" }}>
+        <Link to="/" className="text-indigo-400 hover:text-indigo-200 mb-4 inline-block text-sm">
+          &larr; Back to Arcade
+        </Link>
+        <div className="p-8 rounded-lg bg-red-900/20 border-2 border-red-500 text-white text-center">
+          <h1 className="text-2xl mb-4">🚨 Game Setup Error</h1>
+          <div className="text-left bg-gray-900 p-4 rounded mb-4">
+            <p className="mb-2">{dataValidation.message}</p>
+            {dataValidation.errors.map((error, index) => (
+              <p key={index} className="text-sm text-red-300 mb-1">{error}</p>
+            ))}
+          </div>
+          <p className="text-sm text-gray-300 mb-4">
+            💡 Fix the issues above in your history-facts.js file and refresh the page!
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded text-sm"
+          >
+            🔄 Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4" style={{ fontFamily: "'Press Start 2P', cursive" }}>
@@ -160,17 +218,25 @@ export default function HistoryNinja() {
           <div className="text-center">
             <h2 className="text-xl text-white mb-4">Select Your Path:</h2>
             <div className="flex justify-center gap-4 mb-6">
-              {Object.keys(historyFacts).map(country => (
-                <button
-                  key={country}
-                  onClick={() => setSelectedCountry(country)}
-                  className={`px-4 py-2 text-sm rounded-lg font-bold transition capitalize ${
-                    selectedCountry === country ? 'bg-indigo-500 text-white' : 'bg-gray-700 hover:bg-gray-600'
-                  }`}
-                >
-                  {country}
-                </button>
-              ))}
+              {Object.keys(historyFacts || {}).map(country => {
+                const questionCount = historyFacts[country]?.length || 0;
+                return (
+                  <button
+                    key={country}
+                    onClick={() => setSelectedCountry(country)}
+                    disabled={questionCount === 0}
+                    className={`px-4 py-2 text-sm rounded-lg font-bold transition capitalize ${
+                      selectedCountry === country ? 'bg-indigo-500 text-white' : 
+                      questionCount === 0 ? 'bg-gray-800 text-gray-500 cursor-not-allowed' :
+                      'bg-gray-700 hover:bg-gray-600'
+                    }`}
+                    title={questionCount === 0 ? `❌ No questions available` : `${questionCount} questions available`}
+                  >
+                    {country.replace('-', ' ')}
+                    {questionCount === 0 && ' ⚠️'}
+                  </button>
+                );
+              })}
             </div>
             <p className="text-gray-400 mb-4 text-sm">High Score: {highScore}</p>
             <button onClick={startGame} className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-lg font-bold text-lg transition">

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { wordLists } from './word-list';
+// Kid-friendly validation helpers
+import { validateGameData, safeDataAccess } from '../../shared/helpers/validation';
 // SEMANTIC CUE: Integrating shared progression and effects systems
 import { useGameEffects } from '../../shared/hooks/useGameEffects';
 import { useStreakSystem } from '../../shared/hooks/useStreakSystem';
@@ -105,7 +107,12 @@ export default function WordWizard() {
 
   // --- Game Logic ---
   const startNewRound = () => {
-    const words = wordLists[difficulty];
+    const words = safeDataAccess.getWordList(wordLists, difficulty, 'Word Wizard');
+    if (words.length === 0) {
+      console.error(`❌ No words found for difficulty: ${difficulty}`);
+      setFeedback(`❌ No words available for ${difficulty} difficulty!`);
+      return;
+    }
     const newWord = words[Math.floor(Math.random() * words.length)];
     
     setCurrentWord(newWord);
@@ -131,6 +138,14 @@ export default function WordWizard() {
   
   // SEMANTIC CUE: Reset streaks when starting new game
   const startGame = () => {
+    // Safety check: make sure we have words for this difficulty
+    const availableWords = safeDataAccess.getWordList(wordLists, difficulty, 'Word Wizard');
+    
+    if (availableWords.length < 3) {
+      alert(`❌ Sorry! Not enough words found for "${difficulty}" difficulty. Please check your word-list.js file!`);
+      return;
+    }
+    
     resetStreak();
     startNewRound();
   };
@@ -243,15 +258,25 @@ export default function WordWizard() {
             <div className="mb-6">
                 <div className="text-center mb-2 font-bold text-yellow-400">Difficulty:</div>
                 <div className="flex justify-center gap-2">
-                    {Object.keys(wordLists).map(level => (
-                        <button key={level} onClick={() => setDifficulty(level)}
-                            className={`px-3 py-1 text-sm rounded-lg font-bold transition ${
-                                difficulty === level ? 'bg-yellow-500 text-gray-900' : 'bg-gray-600 text-white hover:bg-gray-500'
-                            }`}
-                        >
-                            {level.charAt(0).toUpperCase() + level.slice(1)}
-                        </button>
-                    ))}
+                    {Object.keys(wordLists || {}).map(level => {
+                        const wordCount = wordLists[level]?.length || 0;
+                        const hasEnoughWords = wordCount >= 5;
+                        return (
+                            <button key={level} 
+                                onClick={() => setDifficulty(level)}
+                                disabled={!hasEnoughWords}
+                                className={`px-3 py-1 text-sm rounded-lg font-bold transition ${
+                                    difficulty === level ? 'bg-yellow-500 text-gray-900' : 
+                                    !hasEnoughWords ? 'bg-gray-800 text-gray-500 cursor-not-allowed' :
+                                    'bg-gray-600 text-white hover:bg-gray-500'
+                                }`}
+                                title={!hasEnoughWords ? `❌ Only ${wordCount} words available (need 5+)` : `${wordCount} words available`}
+                            >
+                                {level.charAt(0).toUpperCase() + level.slice(1)}
+                                {!hasEnoughWords && ' ⚠️'}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
             
